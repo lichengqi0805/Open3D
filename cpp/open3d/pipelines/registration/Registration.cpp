@@ -186,6 +186,70 @@ RegistrationResult RegistrationICP(
     return result;
 }
 
+RegistrationResult RegistrationICP2D(
+        const geometry::PointCloud &source,
+        const geometry::PointCloud &target,
+        double max_correspondence_distance,
+        const Eigen::Matrix4d &init /* = Eigen::Matrix4d::Identity()*/,
+        const TransformationEstimation &estimation
+        /* = TransformationEstimationPointToPoint(false)*/,
+        const ICPConvergenceCriteria
+                &criteria, /* = ICPConvergenceCriteria()*/
+        bool use_dz,
+        bool use_pitch) {
+    if (max_correspondence_distance <= 0.0) {
+        utility::LogError("Invalid max_correspondence_distance.");
+    }
+    if ((estimation.GetTransformationEstimationType() ==
+                 TransformationEstimationType::PointToPlane ||
+         estimation.GetTransformationEstimationType() ==
+                 TransformationEstimationType::ColoredICP) &&
+        (!target.HasNormals())) {
+        utility::LogError(
+                "TransformationEstimationPointToPlane and "
+                "TransformationEstimationColoredICP "
+                "require pre-computed normal vectors for target PointCloud.");
+    }
+    if ((estimation.GetTransformationEstimationType() ==
+         TransformationEstimationType::GeneralizedICP) &&
+        (!target.HasCovariances() || !source.HasCovariances())) {
+        utility::LogError(
+                "TransformationEstimationForGeneralizedICP require "
+                "pre-computed per point covariances matrices for source and "
+                "target PointCloud.");
+    }
+
+    Eigen::Matrix4d transformation = init;
+    geometry::KDTreeFlann kdtree;
+    kdtree.SetGeometry(target);
+    geometry::PointCloud pcd = source;
+    if (!init.isIdentity()) {
+        pcd.Transform(init);
+    }
+    RegistrationResult result;
+    result = GetRegistrationResultAndCorrespondences(
+            pcd, target, kdtree, max_correspondence_distance, transformation);
+    for (int i = 0; i < criteria.max_iteration_; i++) {
+        utility::LogDebug("2D ICP Iteration #{:d}: Fitness {:.4f}, RMSE {:.4f}", i,
+                          result.fitness_, result.inlier_rmse_);
+        Eigen::Matrix4d update = estimation.ComputeTransformation2D(
+                pcd, target, result.correspondence_set_, use_dz, use_pitch);
+        transformation = update * transformation;
+        pcd.Transform(update);
+        RegistrationResult backup = result;
+        result = GetRegistrationResultAndCorrespondences(
+                pcd, target, kdtree, max_correspondence_distance,
+                transformation);
+        if (std::abs(backup.fitness_ - result.fitness_) <
+                    criteria.relative_fitness_ &&
+            std::abs(backup.inlier_rmse_ - result.inlier_rmse_) <
+                    criteria.relative_rmse_) {
+            break;
+        }
+    }
+    return result;
+}
+
 RegistrationResult RegistrationRANSACBasedOnCorrespondence(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,

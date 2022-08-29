@@ -86,6 +86,15 @@ public:
             const geometry::PointCloud &source,
             const geometry::PointCloud &target,
             const CorrespondenceSet &corres) const = 0;
+
+    virtual Eigen::Matrix4d ComputeTransformation2D(
+            const geometry::PointCloud &source,
+            const geometry::PointCloud &target,
+            const CorrespondenceSet &corres,
+            bool use_dz,
+            bool use_pitch) const {
+                return Eigen::Matrix4d::Identity();
+            }
 };
 
 /// \class TransformationEstimationPointToPoint
@@ -155,6 +164,13 @@ public:
             const geometry::PointCloud &source,
             const geometry::PointCloud &target,
             const CorrespondenceSet &corres) const override;
+    
+    Eigen::Matrix4d ComputeTransformation2D(
+            const geometry::PointCloud &source,
+            const geometry::PointCloud &target,
+            const CorrespondenceSet &corres,
+            bool use_dz,
+            bool use_pitch) const override;
 
 public:
     /// shared_ptr to an Abstract RobustKernel that could mutate at runtime.

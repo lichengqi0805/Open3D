@@ -175,6 +175,16 @@ RegistrationResult RegistrationICP(
                 TransformationEstimationPointToPoint(false),
         const ICPConvergenceCriteria &criteria = ICPConvergenceCriteria());
 
+RegistrationResult RegistrationICP2D(
+        const geometry::PointCloud &source,
+        const geometry::PointCloud &target,
+        double max_correspondence_distance,
+        const Eigen::Matrix4d &init = Eigen::Matrix4d::Identity(),
+        const TransformationEstimation &estimation =
+                TransformationEstimationPointToPlane(),
+        const ICPConvergenceCriteria &criteria = ICPConvergenceCriteria(),
+        bool use_dz=false,
+        bool use_pitch=false);
 /// \brief Function for global RANSAC registration based on a given set of
 /// correspondences.
 ///

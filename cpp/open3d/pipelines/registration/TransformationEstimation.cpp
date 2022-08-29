@@ -30,7 +30,8 @@
 
 #include "open3d/geometry/PointCloud.h"
 #include "open3d/utility/Eigen.h"
-
+#include "open3d/utility/Logging.h"
+#include <iostream>
 namespace open3d {
 namespace pipelines {
 namespace registration {
@@ -107,6 +108,55 @@ Eigen::Matrix4d TransformationEstimationPointToPlane::ComputeTransformation(
 
     return is_success ? extrinsic : Eigen::Matrix4d::Identity();
 }
+
+
+Eigen::Matrix4d TransformationEstimationPointToPlane::ComputeTransformation2D(
+        const geometry::PointCloud &source,
+        const geometry::PointCloud &target,
+        const CorrespondenceSet &corres,
+        bool use_dz,
+        bool use_pitch) const {
+    if (corres.empty() || !target.HasNormals())
+        return Eigen::Matrix4d::Identity();
+
+    auto compute_jacobian_and_residual = [&](int i, Eigen::Vector6d &J_r,
+                                             double &r, double &w) {
+        const Eigen::Vector3d &vs = source.points_[corres[i][0]];
+        const Eigen::Vector3d &vt = target.points_[corres[i][1]];
+        const Eigen::Vector3d &nt = target.normals_[corres[i][1]];
+        r = (vs - vt).dot(nt);
+        w = kernel_->Weight(r);
+        // auto vs_cross_nt = vs.cross(nt);
+        J_r.block<3, 1>(0, 0) = vs.cross(nt);
+        J_r.block<3, 1>(3, 0) = nt;
+        // dr/dalpha = dr/dbeta = 0
+        J_r.row(0).setZero();
+        if (use_pitch == false){
+            J_r.row(1).setZero();
+        }
+        if (use_dz == false){
+            J_r.row(5).setZero(); 
+        }
+        // utility::LogDebug(
+        //     "{:06d}th vs.shape: [{:06d},{:06d}]\tnt.shape[{:06d},{:06d}]\tvs_cross_nt.shape: [{:06d},{:06d}]\n", i, vs.rows(), vs.cols(), nt.rows(), nt.cols(), vs_cross_nt.rows(), vs_cross_nt.cols());
+        // std::cout << J_r << std::endl;
+    };
+
+    Eigen::Matrix6d JTJ;
+    Eigen::Vector6d JTr;
+    double r2;
+    std::tie(JTJ, JTr, r2) =
+            utility::ComputeJTJandJTr<Eigen::Matrix6d, Eigen::Vector6d>(
+                    compute_jacobian_and_residual, (int)corres.size());
+
+    bool is_success;
+    Eigen::Matrix4d extrinsic;
+    std::tie(is_success, extrinsic) =
+            utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JTJ, JTr);
+
+    return is_success ? extrinsic : Eigen::Matrix4d::Identity();
+}
+
 
 }  // namespace registration
 }  // namespace pipelines

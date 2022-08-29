@@ -624,6 +624,18 @@ void pybind_registration_methods(py::module &m) {
     docstring::FunctionDocInject(m, "registration_icp",
                                  map_shared_argument_docstrings);
 
+    m.def("registration_icp2d", &RegistrationICP2D,
+          py::call_guard<py::gil_scoped_release>(),
+          "Function for ICP registration", "source"_a, "target"_a,
+          "max_correspondence_distance"_a,
+          "init"_a = Eigen::Matrix4d::Identity(),
+          "estimation_method"_a = TransformationEstimationPointToPlane(),
+          "criteria"_a = ICPConvergenceCriteria(),
+          "use_dz"_a = false,
+          "use_pitch"_a = false);
+    docstring::FunctionDocInject(m, "registration_icp2d",
+                                 map_shared_argument_docstrings);
+
     m.def("registration_colored_icp", &RegistrationColoredICP,
           py::call_guard<py::gil_scoped_release>(),
           "Function for Colored ICP registration", "source"_a, "target"_a,
