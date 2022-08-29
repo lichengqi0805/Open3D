@@ -143,22 +143,22 @@ jobs:
               "${INSTANCE_NAME}":open3d-devel-linux*.tar.xz "$PWD"
           fi
 
-      - name: Upload package
-        if: ${{ env.BUILD_PACKAGE == 'true' }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: open3d-devel-linux-x86_64-cuda
-          path: open3d-devel-linux*.tar.xz
-          if-no-files-found: error
+      # - name: Upload package
+      #   if: ${{ env.BUILD_PACKAGE == 'true' }}
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: open3d-devel-linux-x86_64-cuda
+      #     path: open3d-devel-linux*.tar.xz
+      #     if-no-files-found: error
 
-      - name: Upload package to GCS bucket
-        if: ${{ github.ref == 'refs/heads/master' && env.BUILD_PACKAGE == 'true' }}
-        run: |
-          gcloud compute ssh "${INSTANCE_NAME}" \
-            --zone="${GCE_ZONE}" \
-            --command="ls -alh \
-                       && gsutil cp open3d-devel-linux-*.tar.xz \
-                       gs://open3d-releases-master/devel/"
+      # - name: Upload package to GCS bucket
+      #   if: ${{ github.ref == 'refs/heads/master' && env.BUILD_PACKAGE == 'true' }}
+      #   run: |
+      #     gcloud compute ssh "${INSTANCE_NAME}" \
+      #       --zone="${GCE_ZONE}" \
+      #       --command="ls -alh \
+      #                  && gsutil cp open3d-devel-linux-*.tar.xz \
+      #                  gs://open3d-releases-master/devel/"
 
       - name: VM run docker
         run: |
