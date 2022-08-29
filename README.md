@@ -2,7 +2,61 @@
 <img src="https://raw.githubusercontent.com/isl-org/Open3D/master/docs/_static/open3d_logo_horizontal.png" width="320" />
 </p>
 
-# Open3D: A Modern Library for 3D Data Processing
+# (Modified) Open3D: A Modern Library for 3D Data Processing
+
+## Changelog
+1. `open3d/cpp/pipelines/registration` 下修改了 `Registration.{cpp, h}`和`TransformationEstimation.{cpp, h}`。
+2. 增加了相关的registration_icp2d 的 pybind函数    `open3d/cpp/pybind/pipelines/registration/registration.cpp`
+
+## Testing procedures
+
+Ubuntu/macOS
+1. Install dependencies
+```bash
+util/install_deps_ubuntu.sh
+```
+2. Build
+```
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+```
+3. Build Python Package
+```
+make python-package
+```
+4. Test
+```
+cd build/lib/python_package
+python
+import open3d
+```
+or 
+```
+make pip-package
+cd lib/python_package/pip_package
+```
+then pip install with *.whl file.
+
+5. C++ and Python examples
+```
+cd examples/{cpp, python}
+```
+
+## Usage
+### example for 2d icp
+```python
+def point_to_plane_icp_2d(source, target, threshold):
+    trans_init = np.eye(4)
+    print("Apply point-to-plane ICP")
+    reg_p2l = o3d.pipelines.registration.registration_icp2d(
+        source, target, threshold, trans_init,
+        o3d.pipelines.registration.TransformationEstimationPointToPlane(), use_dz=True, use_pitch=False)
+    print(reg_p2l)
+    print("Transformation is:")
+    print(reg_p2l.transformation, "\n")
+```
 
 <h4>
     <a href="http://www.open3d.org">Homepage</a> |
