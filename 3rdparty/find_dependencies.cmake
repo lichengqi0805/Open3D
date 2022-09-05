@@ -1552,6 +1552,7 @@ else() # if(OPEN3D_USE_ONEAPI_PACKAGES)
                 target_link_libraries(3rdparty_blas INTERFACE
                     ${gfortran_lib}
                     ${gcc_lib}
+                    /opt/homebrew/Cellar/gcc/12.2.0/lib/gcc/current/libquadmath.a
                 )
                 if(APPLE_AARCH64)
                     # Suppress Apple compiler warnigns.
